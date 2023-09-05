@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "720810354794",
+    "project_id": "project-remembrance",
+    "storage_bucket": "project-remembrance.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:720810354794:android:354e49f253801c4a03c213",
+        "android_client_info": {
+          "package_name": "com.maydaexerciser.project_remembrance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "720810354794-m7nhm0b0qr1a2cn89onaphbi94ckgveg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBESgxtuy4AALrGefuZ5kPjA5remTRHnpU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720810354794-m7nhm0b0qr1a2cn89onaphbi94ckgveg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

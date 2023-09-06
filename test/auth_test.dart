@@ -100,7 +100,11 @@ class MockAuthProvider implements AuthProvider {
     if (email != 'test@test.com') throw UserNotFoundAuthException();
     if (password != 'test123') throw WrongPasswordAuthException();
 
-    const user = AuthUser(isEmailVerified: false, email: 'test@test.com');
+    const user = AuthUser(
+        userId: 'my_id',
+        isEmailVerified: false,
+        email: 'test@test.com'
+    );
     _user = user;
 
     return Future.value(user);
@@ -122,7 +126,11 @@ class MockAuthProvider implements AuthProvider {
 
     if(user == null) throw UserNotFoundAuthException();
 
-    const newUser = AuthUser(isEmailVerified: true, email: 'test@test.com');
+    const newUser = AuthUser(
+        userId: 'my_id',
+        isEmailVerified: true,
+        email: 'test@test.com'
+    );
     _user = newUser;
   }
 

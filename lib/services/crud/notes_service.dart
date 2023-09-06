@@ -1,47 +1,16 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' show join;
+import 'package:project_remembrance/extensions/list/filter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../constants/notes_service_constants.dart';
 import 'crud_exceptions.dart';
-
-// Constants. May require a new constants file.
-const dbName = 'notes.db';
-const noteTable = 'note';
-const userTable = 'user';
-const idColumn = 'id';
-const emailColumn = 'email';
-const userIdColumn = 'user_id';
-const titleColum = 'title';
-const textColumn = 'text';
-const isSyncedColumn = 'is_synced_with_cloud';
-
-// Create an user table and a note table. The three //
-// quotation mark helps keeping codes that are written //
-// in other languages. //
-const createUserTable = '''
-      CREATE TABLE IF NOT EXISTS "user" (
-      "id"	INTEGER NOT NULL,
-      "email"	TEXT NOT NULL UNIQUE,
-      PRIMARY KEY("id" AUTOINCREMENT)
-      );
-''';
-const createNoteTable = '''
-      CREATE TABLE IF NOT EXISTS "note" (
-      "id"	INTEGER NOT NULL,
-      "user_id"	INTEGER NOT NULL,
-      "title"	TEXT,
-      "text"	TEXT,
-      "is_synced_with_cloud"	INTEGER NOT NULL DEFAULT 0,
-      FOREIGN KEY("user_id") REFERENCES "user"("id"),
-      PRIMARY KEY("id" AUTOINCREMENT
-      );
-''';
 
 class NotesService {
   Database? _db;
   List<DatabaseNote> _notesCache = [];
+  DatabaseUser? _user;
 
   // Create a singleton of NotesService.
   NotesService._sharedInstance() {
@@ -56,7 +25,16 @@ class NotesService {
 
   late final StreamController<List<DatabaseNote>> _notesStreamController;
 
-  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
+  Stream<List<DatabaseNote>> get allNotes =>
+      _notesStreamController.stream.filter((note) {
+        final currentUser = _user;
+
+        if (currentUser != null) {
+          return note.userId == currentUser.id;
+        } else {
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      } );
 
   Database _checkDatabase() {
     final db = _db;
@@ -107,12 +85,20 @@ class NotesService {
     }
   }
 
-  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+  Future<DatabaseUser> getOrCreateUser({required String email, bool setAsCurrentUser = true}) async {
     try {
       final user = await getUser(email: email);
+
+      if (setAsCurrentUser) {
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(email: email);
+
+      if (setAsCurrentUser) {
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       rethrow;
@@ -294,7 +280,10 @@ class NotesService {
         titleColum: title,
         textColumn: text,
         isSyncedColumn: 0,
-    });
+    },
+        where: 'id = ?',
+        whereArgs: [note.id],
+    );
 
     if (updatesCount == 0) {
       throw CouldNotUpdateNote();

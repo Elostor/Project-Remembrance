@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 @immutable
 class AuthUser {
   final bool isEmailVerified;
-  final String? email;
+  final String email;
+  final String userId;
 
-  const AuthUser({required this.isEmailVerified, required this.email});
+  const AuthUser({required this.userId, required this.isEmailVerified, required this.email});
   factory AuthUser.fromFirebase(User user) => AuthUser(
-      isEmailVerified: user.emailVerified,
-      email: user.email,
+    userId: user.uid,
+    isEmailVerified: user.emailVerified,
+    email: user.email!,
   );
 }

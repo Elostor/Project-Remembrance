@@ -3,7 +3,6 @@ import 'package:project_remembrance/services/auth/auth_service.dart';
 import 'package:project_remembrance/services/crud/notes_service.dart';
 import 'package:project_remembrance/utilities/generics/get_arguments.dart';
 
-// Create a new note. This isn't noteView-V2.
 class CreateUpdateNoteView extends StatefulWidget {
   const CreateUpdateNoteView({super.key});
 
@@ -101,7 +100,7 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
       return widgetNote;
     } else {
       final existingNote = _note;
-      final owner = await _notesService.getUser(email: currentUser.email!);
+      final owner = await _notesService.getUser(email: currentUser.email);
 
       if (existingNote != null) {
         return existingNote;
@@ -115,7 +114,7 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
 
   void _deleteNoteIfEmptyText() async {
     final note = _note;
-    final owner = await _notesService.getUser(email: currentUser.email!);
+    final owner = await _notesService.getUser(email: currentUser.email);
 
     if (_textController.text.isEmpty && note != null) {
       await _notesService.deleteNote(owner: owner, noteId: note.id);

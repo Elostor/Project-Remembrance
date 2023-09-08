@@ -5,4 +5,5 @@ class CloudStorageException implements Exception {
 class CouldNotCreateNoteException extends CloudStorageException {}
 class CouldNotGetAllNotesException extends CloudStorageException {}
 class CouldNotUpdateNoteException extends CloudStorageException {}
-class CouldNOtDeleteNoteException extends CloudStorageException {}
+class CouldNotDeleteNoteException extends CloudStorageException {}
+class CouldNotSyncNoteException extends CloudStorageException {}

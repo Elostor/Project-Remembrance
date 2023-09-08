@@ -1,7 +1,8 @@
-import 'dart:async';
+/*import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' show join;
 import 'package:project_remembrance/extensions/list/filter.dart';
+import 'package:project_remembrance/services/cloud/cloud_note.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../constants/notes_service_constants.dart';
@@ -213,7 +214,7 @@ class NotesService {
         userIdColumn: owner.id,
         titleText: titleText,
         textColumn: contentText,
-        isSyncedColumn: 1,
+        isSyncedColumn: 0,
       });
       final note = DatabaseNote(id: noteId,
           userId: owner.id,
@@ -221,7 +222,7 @@ class NotesService {
           text: contentText,
           isSyncedWithCloud: true,
       );
-      
+
       _notesCache.add(note);
       _notesStreamController.add(_notesCache);
       return note;
@@ -277,7 +278,7 @@ class NotesService {
     await getNote(noteId: note.id);
     final updatesCount = await db.update(
       noteTable, {
-        titleColum: title,
+        titleColumn: title,
         textColumn: text,
         isSyncedColumn: 0,
     },
@@ -338,10 +339,17 @@ class DatabaseNote {
   DatabaseNote.fromRow(Map<String, Object?> map) :
         id = map[idColumn] as int,
         userId = map[userIdColumn] as int,
-        title = map[titleColum] as String,
+        title = map[titleColumn] as String,
         text = map[textColumn] as String,
         isSyncedWithCloud = (map[isSyncedColumn] as int) == 1 ? true : false;
 
+  DatabaseNote.fromCloudNote(CloudNote cloudNote)
+      : id = cloudNote.documentId as int,
+        userId = cloudNote.ownerUserId as int,
+        title = cloudNote.title,
+        text = cloudNote.text,
+        isSyncedWithCloud = true;
+  /*
   factory DatabaseNote.noteFromRowTest(Map<String, Object?> map) =>
       DatabaseNote(
           id: map[idColumn] as int,
@@ -350,6 +358,7 @@ class DatabaseNote {
           text: map[textColumn] as String,
           isSyncedWithCloud: (map[isSyncedColumn] as int) == 1 ? true : false,
       );
+   */
 
   @override
   String toString() =>
@@ -361,3 +370,4 @@ class DatabaseNote {
   @override
   int get hashCode => id.hashCode;
 }
+ */

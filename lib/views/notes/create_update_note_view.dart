@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:project_remembrance/services/auth/auth_service.dart';
-import 'package:project_remembrance/services/crud/notes_service.dart';
+import 'package:project_remembrance/services/cloud/cloud_note.dart';
+import 'package:project_remembrance/services/cloud/firebase_cloud_storage.dart';
 import 'package:project_remembrance/utilities/generics/get_arguments.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../utilities/dialogs/cannot_share_empty_note_dialog.dart';
 
 class CreateUpdateNoteView extends StatefulWidget {
   const CreateUpdateNoteView({super.key});
@@ -11,15 +15,15 @@ class CreateUpdateNoteView extends StatefulWidget {
 }
 
 class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
-  DatabaseNote? _note;
+  CloudNote? _note;
   final currentUser = AuthService.firebase().currentUser!;
-  late final NotesService _notesService;
+  late final FirebaseCloudStorage _notesService;
   late final TextEditingController _titleController;
   late final TextEditingController _textController;
 
   @override
   void initState() {
-    _notesService = NotesService();
+    _notesService = FirebaseCloudStorage();
     _titleController = TextEditingController();
     _textController = TextEditingController();
     super.initState();
@@ -39,6 +43,20 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     return Scaffold(
       appBar: AppBar(
         title: (_note != null) ? const Text('Edit Note') : const Text('New Note'),
+        actions: [
+          IconButton(
+              onPressed: () async {
+                final text = _textController.text;
+
+                if (_note != null || text.isEmpty) {
+                  await showCannotShareEmptyNoteDialog(context);
+                } else {
+                  Share.share(text);
+                }
+              }, 
+              icon: const Icon(Icons.share)
+          )
+        ],
       ),
       body: FutureBuilder(
         future: createOrGetExistingNote(context),
@@ -82,7 +100,11 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     if (note == null) {
       return;
     } else {
-      await _notesService.updateNote(note: note, title: title, text: text);
+      await _notesService.updateNote(
+          documentId: note.documentId,
+          title: title,
+          text: text
+      );
     }
   }
 
@@ -91,8 +113,8 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabaseNote> createOrGetExistingNote(BuildContext context) async {
-    final widgetNote = context.getArgument<DatabaseNote>();
+  Future<CloudNote> createOrGetExistingNote(BuildContext context) async {
+    final widgetNote = context.getArgument<CloudNote>();
 
     if (widgetNote != null) {
       _note = widgetNote;
@@ -100,12 +122,11 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
       return widgetNote;
     } else {
       final existingNote = _note;
-      final owner = await _notesService.getUser(email: currentUser.email);
 
       if (existingNote != null) {
         return existingNote;
       } else {
-        final newNote = await _notesService.createNote(owner: owner);
+        final newNote = await _notesService.createNewNote(ownerUserId: currentUser.userId);
         _note = newNote;
         return newNote;
       }
@@ -114,10 +135,9 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
 
   void _deleteNoteIfEmptyText() async {
     final note = _note;
-    final owner = await _notesService.getUser(email: currentUser.email);
 
     if (_textController.text.isEmpty && note != null) {
-      await _notesService.deleteNote(owner: owner, noteId: note.id);
+      await _notesService.deleteNote(documentId: note.documentId);
     }
   }
 
@@ -127,7 +147,11 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     final text = _textController.text;
 
     if (note != null && text.isNotEmpty) {
-      await _notesService.updateNote(note: note, title: title, text: text);
+      await _notesService.updateNote(
+          documentId: note.documentId,
+          title: title,
+          text: text
+      );
     }
   }
 }

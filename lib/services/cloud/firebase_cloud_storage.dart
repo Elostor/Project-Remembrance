@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:project_remembrance/constants/cloud_storage_constants.dart';
 import 'package:project_remembrance/services/cloud/cloud_storage_exception.dart';
-import 'package:project_remembrance/services/crud/crud_exceptions.dart';
 import 'cloud_note.dart';
 
 class FirebaseCloudStorage {
@@ -27,12 +26,7 @@ class FirebaseCloudStorage {
       ).get()
           .then(
               (querySnapshot) => querySnapshot.docs.map(
-                      (doc) => CloudNote(
-                          documentId: doc.id,
-                          ownerUserId: doc.data()[ownerUsedIdFieldName] as String,
-                          title: doc.data()[titleFieldName] as String,
-                          text: doc.data()[textFieldName] as String
-                      )
+                    (doc) => CloudNote.fromSnapshot(doc),
               ),
       );
     } catch (e) {
@@ -40,12 +34,20 @@ class FirebaseCloudStorage {
     }
   }
 
-  Future<void> createNewNote({required String ownerUserId}) async {
-    await notes.add({
+  Future<CloudNote> createNewNote({required String ownerUserId}) async {
+    final document = await notes.add({
       ownerUsedIdFieldName: ownerUserId,
       titleFieldName: '',
       textFieldName: '',
     });
+    final fetchedNote = await document.get();
+
+    return CloudNote(
+        documentId: fetchedNote.id,
+        ownerUserId: ownerUserId,
+        title: '',
+        text: '',
+    );
   }
 
   Future<void> updateNote({
@@ -67,7 +69,84 @@ class FirebaseCloudStorage {
     try {
       await notes.doc(documentId).delete();
     } catch (e) {
-      throw CouldNotDeleteNote();
+      throw CouldNotDeleteNoteException();
     }
   }
+  /*
+  Future<bool> syncAllNotes({required Iterable<CloudNote> dbNoteList, required String ownerUserId}) async {
+    final userCloudNoteList = await getNotes(ownerUserId: ownerUserId);
+    bool operationFinished;
+
+    if (dbNoteList.isEmpty) {
+      try {
+        for(int i = 0; i < userCloudNoteList.length; i++) {
+          await deleteNote(documentId: userCloudNoteList.elementAt(i).documentId);
+        }
+        operationFinished = true;
+      } catch (e) {
+        operationFinished = false;
+        throw CouldNotDeleteNoteException();
+      }
+    } else if (dbNoteList.length < userCloudNoteList.length) {
+      userCloudNoteList.toList().removeWhere(
+              (note) => dbNoteList.toList().contains(note));
+
+      try {
+        for(int i = 0; i < userCloudNoteList.length; i++) {
+          await deleteNote(documentId: userCloudNoteList.elementAt(i).documentId);
+        }
+        operationFinished = true;
+      } catch (e) {
+        operationFinished = false;
+        throw CouldNotDeleteNoteException();
+      }
+    } else if (dbNoteList.length > userCloudNoteList.length) {
+      dbNoteList.toList().removeWhere(
+              (note) => userCloudNoteList.toList().contains(note));
+
+      try {
+        for(int i = 0; i < dbNoteList.length; i++) {
+          await notes.add({
+            ownerUsedIdFieldName: ownerUserId,
+            titleFieldName: dbNoteList.elementAt(i).title,
+            textFieldName: dbNoteList.elementAt(i).text
+          });
+        }
+        operationFinished = true;
+      } catch (e) {
+        operationFinished = false;
+        throw CouldNotCreateNoteException();
+      }
+    } else if (dbNoteList.length == userCloudNoteList.length) {
+      try {
+        for (int i = 0; i< dbNoteList.length; i++) {
+          updateNote(
+              documentId: dbNoteList.elementAt(i).documentId,
+              title: dbNoteList.elementAt(i).title,
+              text: dbNoteList.elementAt(i).text,
+          );
+        }
+        operationFinished = true;
+      } catch (e) {
+        operationFinished = false;
+        throw CouldNotUpdateNoteException();
+      }
+    } else {
+      operationFinished = true;
+      throw CouldNotSyncNoteException();
+    }
+
+    return operationFinished;
+  }
+
+  Future<Iterable<CloudNote>> convertDbToCloud({required Iterable<DatabaseNote> notes}) async {
+    final result = notes.map((dbNote) => CloudNote.fromDbNote(dbNote));
+
+    return result;
+  }
+
+  Future<Iterable<CloudNote>> convertDbToCloud({required Iterable<DatabaseNote> notes}) {
+    final result = notes.map((note) => CloudNote.fromDb([note]));
+  }
+   */
 }

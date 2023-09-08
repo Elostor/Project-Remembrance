@@ -4,7 +4,7 @@ const userTable = 'user';
 const idColumn = 'id';
 const emailColumn = 'email';
 const userIdColumn = 'user_id';
-const titleColum = 'title';
+const titleColumn = 'title';
 const textColumn = 'text';
 const isSyncedColumn = 'is_synced_with_cloud';
 

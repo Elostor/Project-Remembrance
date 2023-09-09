@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as devtools show log;
-import 'package:project_remembrance/constants/routes.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_remembrance/services/auth/auth_exceptions.dart';
-import 'package:project_remembrance/services/auth/auth_service.dart';
+import 'package:project_remembrance/services/auth/bloc/auth_bloc.dart';
+import 'package:project_remembrance/services/auth/bloc/auth_event.dart';
+import 'package:project_remembrance/utilities/dialogs/loading_dialog.dart';
+import '../services/auth/bloc/auth_state.dart';
 import '../utilities/dialogs/error_dialog.dart';
 
 class LoginView extends StatefulWidget {
@@ -15,81 +17,70 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  CloseDialog? _closeDialogHandle;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login'),),
-      body: Column(
-        children: [
-          TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              hintText: "E-mail",
-            ),
-          ),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration: const InputDecoration(
-                hintText: "Password"
-            ),
-            maxLength: 12,
-          ),
-          Row(
-            children: [
-              TextButton(
-                onPressed: () async {
-                  final emailText = _emailController.text;
-                  final passwordText = _passwordController.text;
-                  final nav = Navigator.of(context);
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) async {
+        if (state is AuthStateLoggedOut) {
+          final closeDialog = _closeDialogHandle;
 
-                  try {
-                    final userCredential = await AuthService.firebase().logIn(
-                        email: emailText,
-                        password: passwordText
-                    );
-                    if (AuthService.firebase().currentUser?.isEmailVerified ?? false) {
-                      nav.pushNamedAndRemoveUntil(
-                        notesRoute, (route) => false,
-                      );
-                    } else {
-                      nav.pushNamed(verifyEmailRoute);
-                    }
-                    devtools.log(userCredential.toString());
-                  } on UserNotFoundAuthException {
-                    if (mounted) {
-                      await showErrorDialog(nav.context, 'User not found');
-                      devtools.log('User not found.');
-                    }
-                  } on WrongPasswordAuthException {
-                    if (mounted) {
-                      await showErrorDialog(context, 'Wrong credentials');
-                      devtools.log('Wrong password.');
-                    }
-                  } on GenericAuthException {
-                    if (mounted) {
-                      await showErrorDialog(context, 'Error: Auth Error Code G');
-                      devtools.log('Error: Auth Error Code G');
-                    }
-                  }
-                },
-                child: const Text("Login"),
+          if (!state.isLoading && closeDialog != null) {
+            closeDialog();
+            _closeDialogHandle = null;
+          } else if (state.isLoading && closeDialog == null) {
+            _closeDialogHandle = showLoadingDialog(
+                context: context,
+                text: 'Loading...'
+            );
+          }
+
+          if (state.exception is UserNotFoundAuthException) {
+            await showErrorDialog(context, 'Wrong credentials');
+          } else
+          if (state.exception is WrongPasswordAuthException) {
+            await showErrorDialog(context, 'Wrong credentials');
+          } else if (state.exception is GenericAuthException) {
+            await showErrorDialog(context, 'Authentication error');
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Login'),),
+        body: Column(
+          children: [
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                hintText: "E-mail",
               ),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                        registerRoute, (route) => false
-                    );
-                  },
-                  child: const Text('Not a member? Click here to register.')
-              )
-            ],
-          ),
-        ],
+            ),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                  hintText: "Password"
+              ),
+              maxLength: 12,
+            ),
+            Row(
+              children: [
+                TextButton(
+                    onPressed: () {
+                      context.read<AuthBloc>().add(
+                          const AuthEventShouldRegister()
+                      );
+                    },
+                    child: const Text('Not a member? Click here to register.')
+                )
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -100,11 +91,12 @@ class _LoginViewState extends State<LoginView> {
     _passwordController = TextEditingController();
     super.initState();
   }
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-  
+
 }

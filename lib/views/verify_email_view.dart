@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:project_remembrance/constants/routes.dart';
-import 'package:project_remembrance/services/auth/auth_service.dart';
-import 'dart:developer' as devtools show log;
-import '../utilities/dialogs/error_dialog.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_remembrance/services/auth/bloc/auth_bloc.dart';
+import 'package:project_remembrance/services/auth/bloc/auth_event.dart';
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({super.key});
@@ -22,20 +20,14 @@ class _VerifyEmailViewState extends State<VerifyEmailView> with WidgetsBindingOb
         children: [
           const Text('A verification email has been sent. Please verify your email address.'),
           TextButton(
-            onPressed: () async {
-              await AuthService.firebase().sendEmailVerification();
+            onPressed: () {
+              context.read<AuthBloc>().add(const AuthEventSendEmailVerification());
             },
             child: const Text('Press here for another verification email'),
           ),
           TextButton(
-              onPressed: () async {
-                await AuthService.firebase().logOut().then( () {Navigator.of(context).pushAndRemoveUntil(
-                    loginRoute as Route<Object?>, (route) => false);
-                } as FutureOr Function(void value)).catchError((e) {
-                  devtools.log(e);
-                  showErrorDialog(context, 'Error: ${e.toString()}');
-                }
-                );
+              onPressed: () {
+                context.read<AuthBloc>().add(const AuthEventLogOut());
               },
               child: const Text('Logout')
           )

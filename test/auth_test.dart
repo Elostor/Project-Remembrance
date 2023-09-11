@@ -63,6 +63,12 @@ void main() {
       final user = provider.currentUser;
       expect(user, isNotNull);
     });
+
+    test('Should be able to reset password', () async {
+      final operationSuccess = await provider
+          .sendPasswordResetEmail(email: 'test@test.com');
+      expect(operationSuccess, true);
+    });
     
   });
 }
@@ -73,6 +79,8 @@ class MockAuthProvider implements AuthProvider {
   AuthUser? _user;
   var _isInitialized = false;
   bool get isInitialized => _isInitialized;
+  static const String realEmail = 'test@test.com';
+  String realPassword = 'test123';
 
 
   @override
@@ -97,13 +105,13 @@ class MockAuthProvider implements AuthProvider {
   @override
   Future<AuthUser> logIn({required String email, required String password}) {
     if (!isInitialized) throw NotInitializedException();
-    if (email != 'test@test.com') throw UserNotFoundAuthException();
-    if (password != 'test123') throw WrongPasswordAuthException();
+    if (email != realEmail) throw UserNotFoundAuthException();
+    if (password != realPassword) throw WrongPasswordAuthException();
 
     const user = AuthUser(
         userId: 'my_id',
         isEmailVerified: false,
-        email: 'test@test.com'
+        email: realEmail
     );
     _user = user;
 
@@ -121,17 +129,30 @@ class MockAuthProvider implements AuthProvider {
   @override
   Future<void> sendEmailVerification() async {
     if (!isInitialized) throw NotInitializedException();
-
-    final user = _user;
-
-    if(user == null) throw UserNotFoundAuthException();
+    if(_user == null) throw UserNotFoundAuthException();
 
     const newUser = AuthUser(
         userId: 'my_id',
         isEmailVerified: true,
-        email: 'test@test.com'
+        email: realEmail
     );
     _user = newUser;
+  }
+
+  @override
+  Future<bool> sendPasswordResetEmail({required String email}) async {
+    if (!isInitialized) throw NotInitializedException();
+
+    String passwordHolder = realPassword;
+
+    if (email != realEmail) {
+      throw UserNotFoundAuthException();
+    } else {
+      await Future.delayed(const Duration(seconds: 1));
+      realPassword = 'resetTest123';
+    }
+
+    return (realPassword == passwordHolder) ? false : true;
   }
 
 }

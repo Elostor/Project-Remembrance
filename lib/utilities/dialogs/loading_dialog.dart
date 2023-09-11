@@ -6,7 +6,6 @@ CloseDialog showLoadingDialog({
 required BuildContext context,
 required String text
 }) {
-  bool canceledOperation = false;
   final dialog = AlertDialog(
     content: Column(
       mainAxisSize: MainAxisSize.min,
@@ -17,7 +16,6 @@ required String text
         const SizedBox(height: 10.0),
         ElevatedButton(
             onPressed: () {
-              canceledOperation = true;
               Navigator.of(context, rootNavigator: true).pop();
             },
             child: const Text('Cancel'),
@@ -34,11 +32,5 @@ required String text
     },
   );
 
-  if (!canceledOperation){
     return () => Navigator.of(context).pop();
-  } else {
-    canceledOperation = false;
-    return () {};
-  }
-
 }

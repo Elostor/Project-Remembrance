@@ -33,3 +33,9 @@ final class AuthEventSendEmailVerification extends AuthEvent {
 final class AuthEventShouldRegister extends AuthEvent {
   const AuthEventShouldRegister();
 }
+
+final class AuthEventForgotPassword extends AuthEvent {
+  final String? email;
+
+  const AuthEventForgotPassword({this.email});
+}
